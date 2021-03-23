@@ -119,14 +119,6 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # DONE: replace with real venue data from the venues table, using venue_id
 
-  def showinfo(show):
-    info = {}
-    info['artist_id'] = show.artist_id
-    info['artist_name'] = Artist.query.get(show.artist_id).name
-    info['artist_image_link'] = Artist.query.get(show.artist_id).image_link
-    info['start_time'] = str(show.start_time)
-    return info
-  
   data = []
   venues = Venue.query.all()
   
@@ -145,18 +137,28 @@ def show_venue(venue_id):
     entry['seeking_description'] = venue.seeking_description
     entry['image_link'] = venue.image_link
 
-    pastshows = []
-    upcomingshows = []
+    past_shows = []
+    upcoming_shows = []
     for show in venue.shows:
-      if show.start_time < datetime.now():
-        pastshows.append(show)
+      if show.start_time <= datetime.now():
+        past_shows.append({
+          'artist_id': show.artist_id,
+          'artist_name': show.showartist.name,
+          'artist_image_link': show.showartist.image_link,
+          'start_time': str(show.start_time)
+        })
       else:
-        upcomingshows.append(show)
+        upcoming_shows.append({
+          'artist_id': show.artist_id,
+          'artist_name': show.showartist.name,
+          'artist_image_link': show.showartist.image_link,
+          'start_time': str(show.start_time)
+        })
       
-    entry['past_shows'] = [showinfo(show) for show in pastshows]
-    entry['upcoming_shows'] = [showinfo(show) for show in upcomingshows]
-    entry['past_shows_count'] = len(entry['past_shows'])
-    entry['upcoming_shows_count'] = len(entry['upcoming_shows'])
+    entry['past_shows'] = past_shows
+    entry['upcoming_shows'] = upcoming_shows
+    entry['past_shows_count'] = len(past_shows)
+    entry['upcoming_shows_count'] = len(upcoming_shows)
 
     data.append(entry)
 
@@ -320,28 +322,32 @@ def show_artist(artist_id):
       entry['seeking_description'] = artist.seeking_description
       entry['image_link'] = artist.image_link
 
-      pastshows = []
-      upcomingshows = []
+      past_shows = []
+      upcoming_shows = []
       for show in artist.shows:
-        if show.start_time < datetime.now():
-          pastshows.append(show)
-        else:
-          upcomingshows.append(show)
-      
-      entry['past_shows'] = []
-      for show in pastshows:
-        if showinfo(show) is not None:
-          entry['past_shows'].append(showinfo(show))
-      entry['upcoming_shows'] = []
-      for show in upcomingshows:
-        if showinfo(show) is not None:
-          entry['upcoming_shows'].append(showinfo(show))
-      entry['past_shows_count'] = len(entry['past_shows'])
-      entry['upcoming_shows_count'] = len(entry['upcoming_shows'])
+        if show.venue_id:
+          if show.start_time <= datetime.now():
+            past_shows.append({
+              'venue_id': show.venue_id,
+              'venue_name': show.showvenue.name,
+              'venue_image_link': show.showvenue.image_link,
+              'start_time': str(show.start_time)
+            })
+          else:
+            upcoming_shows.append({
+              'venue_id': show.venue_id,
+              'venue_name': show.showvenue.name,
+              'venue_image_link': show.showvenue.image_link,
+              'start_time': str(show.start_time)
+            })
+
+      entry['past_shows'] = past_shows
+      entry['upcoming_shows'] = upcoming_shows
+      entry['past_shows_count'] = len(past_shows)
+      entry['upcoming_shows_count'] = len(upcoming_shows)
 
       data.append(entry)
   
-
     currartistdata = list(filter(lambda d: d['id'] == artist_id, data))[0]
     return render_template('pages/show_artist.html', artist=currartistdata)
   
